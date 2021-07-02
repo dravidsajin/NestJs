@@ -29,6 +29,7 @@ export class UserController {
       let username = createUserDto.firstname+' '+createUserDto.lastname;
       createUserDto['created'] = new Date();
       let userDetails = await this.userService.create(createUserDto);
+      console.log(userDetails);
       await this.mailService.sendRegistrationEmail(createUserDto.email, username);//send the registration email to user
 
       return {
@@ -80,50 +81,96 @@ export class UserController {
       }
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
-
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async findOne(@Request() request) {
-    console.log("=========tokenuserdata============");
-    console.log(request.user);
     let tokendata = request.user;
-
-    if(Object.keys(tokendata).length && tokendata.user_id){
-      try{        
-          let oUserData = await this.userService.findUserById(tokendata.user_id);
-          if(Object.keys(oUserData).length){
-              console.log("=====userfound=======");
-              console.log(oUserData);
-              return {
-                "status": true,
-                "message": "Retrieved Successfully",
-                "statuscode": HttpStatus.OK,
-                "result": oUserData
-              }              
-          }else{
-              throw new HttpException('User Not Found',HttpStatus.UNAUTHORIZED);    
-          }            
-      }catch(e){
-          console.log("=====error=======");
-          console.log(e);
-          throw new HttpException('Error',HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    }else{
-        throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
+    try{        
+        let oUserData = await this.userService.findUserById(tokendata.user_id);
+        if(Object.keys(oUserData).length){
+            console.log("=====userfound=======");
+            console.log(oUserData);
+            return {
+              "status": true,
+              "message": "Retrieved Successfully",
+              "statuscode": HttpStatus.OK,
+              "result": oUserData
+            }              
+        }else{
+            throw new HttpException('User Not Found',HttpStatus.UNAUTHORIZED);
+        }            
+    }catch(error){
+        console.log("=====error=======");
+        console.log(error);
+        throw new HttpException(error,HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @UseGuards(JwtAuthGuard)
+  @Patch('/updateuser')
+  async update(@Body() updateUserDto: UpdateUserDto, @Request() request) {
+    let tokendata = request.user;    
+    try {
+      let oUserData = await this.userService.findUserById(tokendata.user_id); // check user is eixst or not
+      if(Object.keys(oUserData).length){
+          console.log("=====userfound=======");
+          console.log(oUserData);
+          let updateData = {
+              firstname: updateUserDto.firstname || oUserData.firstname,
+              lastname: updateUserDto.lastname || oUserData.lastname,
+              mobilenumber: updateUserDto.mobilenumber || oUserData.mobilenumber              
+          }
+          console.log(updateUserDto.password);
+          if(updateUserDto.password){
+              let salt = await bcrypt.genSalt(10);
+              let hash = await bcrypt.hash(updateUserDto.password, salt);
+              updateData['password'] = hash;
+          }
+
+          console.log("=====update user data======"); 
+          console.log(updateData);
+
+          let updatedata = await this.userService.updateUserByID(updateData, tokendata.user_id);          
+          return {
+            "status": true,
+            "message": "Updated Successfully",
+            "statuscode": HttpStatus.OK,
+            "result": updatedata
+          }
+      }else{
+          throw new HttpException('User Not Found',HttpStatus.UNAUTHORIZED);
+      }
+    } catch (error) {
+        console.log("=====error=======");
+        console.log(error);
+        throw new HttpException(error,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  @Delete('/deleteuser')
+  async deleteuser(@Request() request) {    
+    let user_id = request.user.user_id;
+    try {
+       console.log(`=====deleteuserid${user_id}`);
+       let deleteRes = await this.userService.deleteByUserID(user_id);
+       if(deleteRes.deletedCount == 1){
+          return {
+            "status": true,
+            "message": "Acccount Deleted Successfully",
+            "statuscode": HttpStatus.OK
+          }
+       }else{
+          return {
+            "status": true,
+            "message": "Acccount Not Deleted",
+            "statuscode": HttpStatus.OK
+          }
+       }
+    } catch (error) {
+      console.log("=====error=======");
+      console.log(error);
+      throw new HttpException(error,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

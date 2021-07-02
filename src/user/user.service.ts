@@ -24,19 +24,11 @@ export class UserService {
       return this.userModel.findOne({_id: user_id});
   }
 
-  findAll() {
-    return `This action returns all user`;
+  updateUserByID(updatedata, userid){
+      return this.userModel.findOneAndUpdate({_id: userid}, {$set: updatedata}, {new: true});
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  deleteByUserID(user_id: string){
+      return this.userModel.deleteOne({_id: user_id});
   }
 }
