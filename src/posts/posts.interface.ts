@@ -6,4 +6,5 @@ export interface Post extends Document {
   readonly user_id: string;
   readonly like_count: number;
   readonly post_type: string;
+  readonly is_blocked: string;
 }

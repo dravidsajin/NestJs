@@ -9,6 +9,11 @@ export const PostSchema = new mongoose.Schema({
     enum: ['text', 'image'],
     default: 'text'
   },
+  is_blocked: {
+    type: String,
+    enum: ['0', '1'],
+    default: '0'
+  },
   user_id: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
   created: Date,
   modified: {
