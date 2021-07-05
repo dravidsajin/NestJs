@@ -26,4 +26,8 @@ export class PostsService {
     deletePost(postid, userid){
         return this.postModel.deleteOne({_id: postid, user_id: userid});
     }
+
+    updatePost(updateData, userid, postid){
+        return this.postModel.findOneAndUpdate({_id: postid, user_id: userid}, updateData, {new: true});
+    }
 }

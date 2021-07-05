@@ -1,6 +1,7 @@
-import { Body, Controller, Post, Get, UsePipes, Request, UseGuards, HttpException, HttpStatus, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Post, Get, UsePipes, Request, UseGuards, HttpException, HttpStatus, Delete, Param, Patch } from '@nestjs/common';
 import { ValidationPipe } from '../pipes/validation.pipes';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -98,5 +99,35 @@ export class PostsController {
         }else{
             throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    @UseGuards(JwtAuthGuard)    
+    @Patch('/editPost/:postid')
+    async editPost(@Request() request,@Body() updateUserDto: UpdatePostDto, @Param('postid') postid){
+        if(request.user.user_id){
+            if(postid){                                
+                let postDetails = await this.postService.getPostByID(postid, request.user.user_id);
+                console.log(postDetails)
+                if(postDetails){
+                    let json = {
+                        post_content: updateUserDto.post_content || postDetails.post_content
+                    }
+                    let updateRes = await this.postService.updatePost(json, request.user.user_id, postid);
+                    return {
+                        status: true,
+                        statuscode: HttpStatus.OK,
+                        message: 'post updated successfully',
+                        result: updateRes
+                    }
+                }else{
+                    throw new HttpException('Could not update the post',HttpStatus.OK);
+                }
+            }else{
+                throw new HttpException('Invalid post id',HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else{
+            throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
+        }
+        console.log(updateUserDto);
     }
 }
