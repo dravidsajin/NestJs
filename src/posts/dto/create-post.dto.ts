@@ -6,9 +6,6 @@ export class CreatePostDto {
     
     public post_imgurl: string;
 
-    @IsNotEmpty()    
-    readonly user_id: string;
-
     @IsEnum({text: 'text', image: 'image'})
     readonly post_type: string;
 }

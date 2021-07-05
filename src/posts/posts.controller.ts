@@ -1,15 +1,13 @@
-import { Body, Controller, Post, UsePipes, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UsePipes, Request, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { ValidationPipe } from '../pipes/validation.pipes';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UserService } from '../user/user.service';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('posts')
 export class PostsController {
 
-    constructor(
-        private userService: UserService,
+    constructor(    
         private postService: PostsService
     ){}
     
@@ -18,7 +16,23 @@ export class PostsController {
     @Post('/createPost')
     async createPost(@Request() request,@Body() createPostDto:CreatePostDto){
         
-        console.log(request.user);
-        // let userexistdata = await this.userService.findUserByEmail(createUserDto.email); //check user is already exist
+        if(request.user.user_id){
+            let postType = createPostDto.post_type;
+            let imgurl = createPostDto.post_imgurl;
+            if(postType == 'image' && imgurl){
+                throw new HttpException('Invalid image url', HttpStatus.INTERNAL_SERVER_ERROR);    
+            }else{
+                createPostDto['user_id'] = request.user.user_id;
+                let postRes = await this.postService.createPost(createPostDto);
+                return {
+                    'status': true,
+                    'statuscode': HttpStatus.OK,
+                    'message': 'post created successfully',
+                    'result': postRes
+                }
+            }                    
+        }else{
+            throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
+        }
     }
 }
