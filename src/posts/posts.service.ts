@@ -28,6 +28,10 @@ export class PostsService {
     }
 
     updatePost(updateData, userid, postid){
-        return this.postModel.findOneAndUpdate({_id: postid, user_id: userid}, updateData, {new: true});
+        return this.postModel.findOneAndUpdate({_id: postid, user_id: userid}, {$set: updateData}, {new: true});
+    }
+
+    blockUnblock(postid, blockstatus){
+        return this.postModel.updateOne({_id: postid},{$set: {'is_blocked':blockstatus}}, {new: true});
     }
 }

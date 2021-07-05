@@ -30,6 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             email: userdetails.email,
             gender: userdetails.gender,
             mobilenumber: userdetails.mobilenumber,
+            user_role: ouserdata.role || 'member'
           }
         }else{
           throw new HttpException('Invalid User details. Please check your email and password',HttpStatus.UNAUTHORIZED);

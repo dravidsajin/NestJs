@@ -4,6 +4,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { request } from 'express';
 
 @Controller('posts')
 export class PostsController {
@@ -128,6 +129,34 @@ export class PostsController {
         }else{
             throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
         }
-        console.log(updateUserDto);
+    }
+
+    @UseGuards(JwtAuthGuard)    
+    @Patch('/blockunblock/:postid')
+    async blockunblock(@Request() request,@Param('postid') postid){
+        if(request.user.user_id){
+            if(postid){
+                if(request.user.user_role == 'admin'){
+                    let blockstatus = request.body.status;
+                    if(!blockstatus || (blockstatus != '1' && blockstatus != '0')){
+                        throw new HttpException("Invalid block status",HttpStatus.INTERNAL_SERVER_ERROR);        
+                    }else{
+                        let updatedRes = await this.postService.blockUnblock(postid, blockstatus);
+                        return {
+                            status: true,
+                            statuscode: HttpStatus.OK,
+                            message: (blockstatus == '1') ? 'post blocked successfully' : 'post unblocked successfully',
+                            result: updatedRes
+                        }
+                    }                    
+                }else{
+                    throw new HttpException("You don't have permission to block the post",HttpStatus.UNAUTHORIZED);    
+                }
+            }else{
+                throw new HttpException('Invalid post id',HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else{
+            throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
+        }
     }
 }
