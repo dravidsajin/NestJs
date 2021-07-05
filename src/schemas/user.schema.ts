@@ -15,6 +15,10 @@ export const UserSchema = new mongoose.Schema({
     enum: ['male', 'female'],
     default: 'male'
   },
+  role: {
+    type: String,
+    default: 'member'
+  },
   created: Date,
   modified: {
       type: Date,

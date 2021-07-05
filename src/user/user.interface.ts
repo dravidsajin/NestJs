@@ -8,4 +8,5 @@ export interface User extends Document {
   readonly mobilenumber: string;
   readonly gender: string;
   readonly created: string;
+  readonly role: string;
 }
