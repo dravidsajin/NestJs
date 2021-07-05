@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, UsePipes, Request, UseGuards, HttpException, HttpStatus, Query, Param } from '@nestjs/common';
+import { Body, Controller, Post, Get, UsePipes, Request, UseGuards, HttpException, HttpStatus, Delete, Param } from '@nestjs/common';
 import { ValidationPipe } from '../pipes/validation.pipes';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostsService } from './posts.service';
@@ -25,10 +25,10 @@ export class PostsController {
                 createPostDto['user_id'] = request.user.user_id;
                 let postRes = await this.postService.createPost(createPostDto);
                 return {
-                    'status': true,
-                    'statuscode': HttpStatus.OK,
-                    'message': 'post created successfully',
-                    'result': postRes
+                    status: true,
+                    statuscode: HttpStatus.OK,
+                    message: 'post created successfully',
+                    result: postRes
                 }
             }                    
         }else{
@@ -43,10 +43,10 @@ export class PostsController {
             let user_id = request.user.user_id;
             let aPosts = await this.postService.getAllposts(user_id);//get all the posts from database
             return {
-                'status': true,
-                'statuscode': HttpStatus.OK,
-                'message': 'posts retrieved successfully',
-                'result': aPosts
+                status: true,
+                statuscode: HttpStatus.OK,
+                message: 'posts retrieved successfully',
+                result: aPosts
             }
         }else{
             throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
@@ -58,13 +58,13 @@ export class PostsController {
     async getPost(@Request() request, @Param('postid') postid){        
         if(request.user.user_id){
             if(postid){                    
-                let postDetails = await this.postService.getPostByID(postid);
+                let postDetails = await this.postService.getPostByID(postid, request.user.user_id);
                 if(postDetails && Object.keys(postDetails).length){
                     return {
-                        'status': true,
-                        'statuscode': HttpStatus.OK,
-                        'message': 'post retrieved successfully',
-                        'result': postDetails
+                        status: true,
+                        statuscode: HttpStatus.OK,
+                        message: 'post retrieved successfully',
+                        result: postDetails
                     }
                 }else{
                     throw new HttpException('Post Not Found',HttpStatus.OK);            
@@ -75,5 +75,28 @@ export class PostsController {
         }else{
             throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
         }        
+    }
+
+    @UseGuards(JwtAuthGuard)    
+    @Delete('/deletePost/:postid')
+    async deletePost(@Request() request,@Param('postid') postid){
+        if(request.user.user_id){
+            if(postid){
+                let deleteRes = await this.postService.deletePost(postid, request.user.user_id);
+                if(deleteRes.deletedCount == 1){
+                    return {
+                        status: true,
+                        statuscode: HttpStatus.OK,
+                        message: 'post deleted successfully'                        
+                    }
+                }else{
+                    throw new HttpException('Could not delete the post or post is already been deleted',HttpStatus.OK);
+                }
+            }else{
+                throw new HttpException('Invalid post id',HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else{
+            throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
+        }
     }
 }

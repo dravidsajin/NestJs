@@ -19,7 +19,11 @@ export class PostsService {
         return this.postModel.find({user_id: user_id, is_blocked: '0'});
     }
 
-    getPostByID(postid){
-        return this.postModel.findOne({_id: postid, is_blocked: '0'})
+    getPostByID(postid, userid){
+        return this.postModel.findOne({_id: postid, user_id: userid, is_blocked: '0'});
+    }
+
+    deletePost(postid, userid){
+        return this.postModel.deleteOne({_id: postid, user_id: userid});
     }
 }
