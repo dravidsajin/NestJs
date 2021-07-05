@@ -111,7 +111,8 @@ export class PostsController {
                 console.log(postDetails)
                 if(postDetails){
                     let json = {
-                        post_content: updateUserDto.post_content || postDetails.post_content
+                        post_content: updateUserDto.post_content || postDetails.post_content,
+                        modified: new Date() 
                     }
                     let updateRes = await this.postService.updatePost(json, request.user.user_id, postid);
                     return {
@@ -152,6 +153,55 @@ export class PostsController {
                 }else{
                     throw new HttpException("You don't have permission to block the post",HttpStatus.UNAUTHORIZED);    
                 }
+            }else{
+                throw new HttpException('Invalid post id',HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else{
+            throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @UseGuards(JwtAuthGuard)    
+    @Post('/likeunlike')
+    async likeunlike(@Request() request,@Body('post_id') postid){    
+        if(request.user.user_id){
+            if(postid){
+                let userid = request.user.user_id;
+                let postData = await this.postService.getPost(postid);//check post exist
+                console.log(postData);
+                if(postData && Object.keys(postData).length){
+                    let oLikedata = await this.postService.checkLikeStatus(userid, postid);// check user already liked this post
+                    console.log(oLikedata)
+                    console.log("=====post like data=======");                    
+                    if(oLikedata && Object.keys(oLikedata).length){ //if already found unlike post
+                        console.log("===getting in");
+                        console.log(oLikedata);
+                        let likecount = parseInt(oLikedata.post_id[0]['like_count']);
+                        likecount = (likecount > 0) ? likecount - 1 : 0;
+
+                        await Promise.all([this.postService.removeLike(userid, postid), this.postService.reduceLikeCount(postid, likecount)]);
+                        let response = await this.postService.getPost(postid);
+                        return {
+                            status: true,
+                            statuscode: HttpStatus.OK,
+                            message: "post unliked",
+                            result: response 
+                        }
+                    }else{ // add the like no data found
+
+                        await Promise.all([this.postService.addLike(userid, postid), this.postService.updateLikeCount(postid)]);
+                        let response = await this.postService.getPost(postid); //get the post data
+                        
+                        return {
+                            status: true,
+                            statuscode: HttpStatus.OK,
+                            message: "post liked",
+                            result: response 
+                        }
+                    }
+                }else{
+                    throw new HttpException('Post Not Found',HttpStatus.OK);    
+                }                
             }else{
                 throw new HttpException('Invalid post id',HttpStatus.INTERNAL_SERVER_ERROR);
             }

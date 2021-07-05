@@ -1,13 +1,16 @@
 import { Model } from 'mongoose';
 import { Injectable, Inject } from '@nestjs/common';
 import { Post } from './posts.interface';
+import { PostLikes } from './postlike.interface';
  
 @Injectable()
 export class PostsService {
 
     constructor(
         @Inject('POST_MODEL')
-        private postModel: Model<Post>
+        private postModel: Model<Post>,
+        @Inject('POSTLIKES_MODEL')
+        private postLikeModel: Model<PostLikes>,
     ){}
 
     createPost(createPostDto): Promise<Post>{
@@ -32,6 +35,33 @@ export class PostsService {
     }
 
     blockUnblock(postid, blockstatus){
-        return this.postModel.updateOne({_id: postid},{$set: {'is_blocked':blockstatus}}, {new: true});
+        return this.postModel.updateOne({_id: postid},{$set: {'is_blocked':blockstatus, modified: new Date()}}, {new: true});
+    }
+
+    checkLikeStatus(userid, postid){
+        return this.postLikeModel.findOne({user_id: userid, post_id: postid}).populate('post_id');
+    }
+
+    addLike(userid, postid): Promise<PostLikes>{
+        const oPostLikes = new this.postLikeModel(); 
+        oPostLikes['user_id'] = userid;
+        oPostLikes['post_id'] = postid;
+        return oPostLikes.save();
+    }
+
+    updateLikeCount(postid){
+        return this.postModel.updateOne({_id: postid}, {$inc: {like_count: 1}}, {new: true});
+    }
+
+    getPost(postid){
+        return this.postModel.findOne({_id: postid, is_blocked: "0"});
+    }
+
+    removeLike(userid, postid){
+        return this.postLikeModel.deleteOne({post_id: postid, user_id: userid});
+    }
+
+    reduceLikeCount(postid, likecount){
+        return this.postModel.updateOne({_id: postid}, {$set: {like_count: likecount}}, {new: true});
     }
 }

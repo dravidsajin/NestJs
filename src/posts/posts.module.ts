@@ -3,6 +3,7 @@ import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 import { DatabaseModule } from '../database/database.module';
 import { postProviders } from '../providers/post.providers';
+import { postLikeProviders } from '../providers/postlike.providers';
 import { UserModule } from '../user/user.module';
 
 @Module({
@@ -10,7 +11,8 @@ import { UserModule } from '../user/user.module';
     controllers: [PostsController],
     providers: [
         PostsService,
-        ...postProviders
+        ...postProviders,
+        ...postLikeProviders
     ]
 })
 export class PostsModule {}
