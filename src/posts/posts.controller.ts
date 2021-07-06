@@ -4,13 +4,14 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { request } from 'express';
+import { RedisService } from '../redis/redis.service';
 
 @Controller('posts')
 export class PostsController {
 
     constructor(    
-        private postService: PostsService
+        private postService: PostsService,
+        private redisService: RedisService
     ){}
     
     @UseGuards(JwtAuthGuard)
@@ -208,5 +209,10 @@ export class PostsController {
         }else{
             throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    @Get('/checkredisconnection')
+    async checkredisconnection(){
+        return this.redisService.checkConnection();
     }
 }

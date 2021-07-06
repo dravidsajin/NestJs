@@ -5,9 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
-import { PostsController } from './posts/posts.controller';
-import { PostsService } from './posts/posts.service';
 import { PostsModule } from './posts/posts.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -18,7 +17,8 @@ import { PostsModule } from './posts/posts.module';
     UserModule,
     MailModule,
     AuthModule,
-    PostsModule
+    PostsModule,
+    RedisModule
   ],
   controllers: [AppController],
   providers: [AppService],

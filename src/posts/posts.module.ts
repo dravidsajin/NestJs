@@ -5,9 +5,10 @@ import { DatabaseModule } from '../database/database.module';
 import { postProviders } from '../providers/post.providers';
 import { postLikeProviders } from '../providers/postlike.providers';
 import { UserModule } from '../user/user.module';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-    imports: [DatabaseModule, UserModule],
+    imports: [DatabaseModule, UserModule, RedisModule],
     controllers: [PostsController],
     providers: [
         PostsService,
