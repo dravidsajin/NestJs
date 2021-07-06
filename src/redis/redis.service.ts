@@ -1,14 +1,17 @@
-import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
-import { Cache } from "cache-manager";
+import { Injectable } from '@nestjs/common';
+import * as redis from 'redis';
 
 @Injectable()
 export class RedisService {
-    constructor(
-        @Inject(CACHE_MANAGER)
-        private cacheManager: Cache
-    ){}
+    public client: any;
+    constructor(){
+        this.client = redis.createClient({
+            host: process.env.REDIS_HOST,
+            port: process.env.REDIS_PORT
+        });
+    }
 
     checkConnection(){
-        return "redis service connected";
+        this.client.sadd('SampleGroup','Name');
     }
 }
