@@ -18,8 +18,8 @@ export class PostsService {
         return post.save();
     }
 
-    getAllposts(user_id){
-        return this.postModel.find({user_id: user_id, is_blocked: '0'});
+    getAllposts(aPostIds){
+        return this.postModel.find({_id:{$nin: aPostIds},is_blocked: '0'});
     }
 
     getPostByID(postid, userid){
@@ -63,5 +63,9 @@ export class PostsService {
 
     reduceLikeCount(postid, likecount){
         return this.postModel.updateOne({_id: postid}, {$set: {like_count: likecount}}, {new: true});
+    }
+
+    getTrendingData(aPostids){
+        return this.postModel.find({_id: {$in: aPostids}});
     }
 }

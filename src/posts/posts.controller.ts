@@ -40,16 +40,32 @@ export class PostsController {
     }
 
     @UseGuards(JwtAuthGuard)    
-    @Get('/getAll')
-    async getAllposts(@Request() request){
+    @Get('/getAll/:page')
+    async getAllposts(@Request() request, @Param('page') page){
         if(request.user.user_id){
+            let aPostIds = [];
+            let aTrendingPosts = [];
             let user_id = request.user.user_id;
-            let aPosts = await this.postService.getAllposts(user_id);//get all the posts from database
+            let pageNumber = parseInt(page);
+            let offset = pageNumber > 1 ? (pageNumber - 1) * 10 : 0;
+            let limit = 10;
+            let aTrendingPostids = await this.redisService.getTrendingData(limit, offset);            
+            if(Array.isArray(aTrendingPostids) && aTrendingPostids.length){
+                aPostIds = aTrendingPostids.map((obj) => {
+                    let splitedpostid = obj.split('post_');
+                    return splitedpostid[1];
+                });       
+                if(aPostIds.length){
+                    aTrendingPosts = await this.postService.getTrendingData(aPostIds);// get the trending post data                    
+                }     
+            }            
+            let aPosts = await this.postService.getAllposts(aPostIds);//get all the posts from database            
             return {
                 status: true,
                 statuscode: HttpStatus.OK,
                 message: 'posts retrieved successfully',
-                result: aPosts
+                trendingposts: aTrendingPosts,
+                posts: aPosts
             }
         }else{
             throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);
@@ -85,8 +101,8 @@ export class PostsController {
     async deletePost(@Request() request,@Param('postid') postid){
         if(request.user.user_id){
             if(postid){
-                let deleteRes = await this.postService.deletePost(postid, request.user.user_id);
-                if(deleteRes.deletedCount == 1){
+                let deleteRes = await Promise.all([this.postService.deletePost(postid, request.user.user_id), this.redisService.removePostData(postid)]);
+                if(deleteRes[0].deletedCount == 1){
                     return {
                         status: true,
                         statuscode: HttpStatus.OK,
@@ -180,7 +196,8 @@ export class PostsController {
                         let likecount = parseInt(oLikedata.post_id[0]['like_count']);
                         likecount = (likecount > 0) ? likecount - 1 : 0;
 
-                        await Promise.all([this.postService.removeLike(userid, postid), this.postService.reduceLikeCount(postid, likecount)]);
+                        await Promise.all([this.postService.removeLike(userid, postid), this.postService.reduceLikeCount(postid, likecount),this.redisService.reducePostLikeCount(postid)]);
+                                            
                         let response = await this.postService.getPost(postid);
                         return {
                             status: true,
@@ -190,7 +207,7 @@ export class PostsController {
                         }
                     }else{ // add the like no data found
 
-                        await Promise.all([this.postService.addLike(userid, postid), this.postService.updateLikeCount(postid)]);
+                        await Promise.all([this.postService.addLike(userid, postid), this.postService.updateLikeCount(postid), this.redisService.addPostLikeCount(postid)]);
                         let response = await this.postService.getPost(postid); //get the post data
                         
                         return {
@@ -213,6 +230,6 @@ export class PostsController {
 
     @Get('/checkredisconnection')
     async checkredisconnection(){
-        return this.redisService.checkConnection();
+        return await this.redisService.removePostData('dsadsadsad');        
     }
 }
