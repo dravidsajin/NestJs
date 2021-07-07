@@ -56,10 +56,32 @@ export class PostsController {
                     return splitedpostid[1];
                 });       
                 if(aPostIds.length){
-                    aTrendingPosts = await this.postService.getTrendingData(aPostIds);// get the trending post data                    
+                    aTrendingPosts = await this.postService.getTrendingData(aPostIds);// get the trending post data        
+                    if(aTrendingPosts.length){                        
+                        await Promise.all(aTrendingPosts.map(async (post, index) => {                            
+                            let olikeData = await this.postService.checkAlreadyLiked(post._id, user_id); //check the post is liked by the user or not                              
+                            if(olikeData && Object.keys(olikeData).length){
+                                aTrendingPosts[index]['likestatus'] = true;
+                            }else{
+                                aTrendingPosts[index]['likestatus'] = false;
+                            }
+                            console.log(aTrendingPosts[index]);
+                        }));
+                    }                    
                 }     
             }            
-            let aPosts = await this.postService.getAllposts(aPostIds);//get all the posts from database            
+            let aPosts = await this.postService.getAllposts(aPostIds, limit, offset);//get all the posts from database            
+            if(aPosts.length){
+                await Promise.all(aPosts.map(async (post, index) => {                
+                   let olikeData = await this.postService.checkAlreadyLiked(post._id, user_id); //check the post is liked by the user or not                   
+                   if(olikeData && Object.keys(olikeData).length){
+                     aPosts[index]['likestatus'] = true;
+                   }else{
+                     aPosts[index]['likestatus'] = false;
+                   }                   
+                }));
+            }       
+                    
             return {
                 status: true,
                 statuscode: HttpStatus.OK,
@@ -79,6 +101,12 @@ export class PostsController {
             if(postid){                    
                 let postDetails = await this.postService.getPostByID(postid, request.user.user_id);
                 if(postDetails && Object.keys(postDetails).length){
+                    let olikedata = await this.postService.checkAlreadyLiked(postDetails._id, request.user.user_id)//check user like status
+                    if(olikedata && Object.keys(olikedata).length){
+                        postDetails['likestatus'] = true;
+                    }else{
+                        postDetails['likestatus'] = false;
+                    }
                     return {
                         status: true,
                         statuscode: HttpStatus.OK,

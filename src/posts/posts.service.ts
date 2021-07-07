@@ -18,12 +18,12 @@ export class PostsService {
         return post.save();
     }
 
-    getAllposts(aPostIds){
-        return this.postModel.find({_id:{$nin: aPostIds},is_blocked: '0'});
+    getAllposts(aPostIds, limit, offset){
+        return this.postModel.find({_id:{$nin: aPostIds},is_blocked: '0'}).skip(offset).limit(limit).lean().exec();
     }
 
     getPostByID(postid, userid){
-        return this.postModel.findOne({_id: postid, user_id: userid, is_blocked: '0'});
+        return this.postModel.findOne({_id: postid, user_id: userid, is_blocked: '0'}).lean().exec();
     }
 
     deletePost(postid, userid){
@@ -66,6 +66,10 @@ export class PostsService {
     }
 
     getTrendingData(aPostids){
-        return this.postModel.find({_id: {$in: aPostids}});
+        return this.postModel.find({_id: {$in: aPostids}}).lean().exec();
+    }
+
+    checkAlreadyLiked(post_id,user_id){
+        return this.postLikeModel.findOne({post_id: post_id, user_id: user_id});
     }
 }
