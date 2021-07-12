@@ -72,4 +72,8 @@ export class PostsService {
     checkAlreadyLiked(post_id,user_id){
         return this.postLikeModel.findOne({post_id: post_id, user_id: user_id});
     }
+
+    getTotalCount(){
+        return this.postModel.count({});
+    }
 }

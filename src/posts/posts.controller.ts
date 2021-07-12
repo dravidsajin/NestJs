@@ -22,7 +22,7 @@ export class PostsController {
         if(request.user.user_id){
             let postType = createPostDto.post_type;
             let imgurl = createPostDto.post_imgurl;
-            if(postType == 'image' && imgurl){
+            if(postType == 'image' && !imgurl){
                 throw new HttpException('Invalid image url', HttpStatus.INTERNAL_SERVER_ERROR);    
             }else{
                 createPostDto['user_id'] = request.user.user_id;
@@ -70,14 +70,14 @@ export class PostsController {
                     }                    
                 }     
             }            
-            let aPosts = await this.postService.getAllposts(aPostIds, limit, offset);//get all the posts from database            
-            if(aPosts.length){
-                await Promise.all(aPosts.map(async (post, index) => {                
+            let aPostAllData = await Promise.all([this.postService.getAllposts(aPostIds, limit, offset), this.postService.getTotalCount()]);//get all the posts from database            
+            if(aPostAllData[0].length){
+                await Promise.all(aPostAllData[0].map(async (post, index) => {                
                    let olikeData = await this.postService.checkAlreadyLiked(post._id, user_id); //check the post is liked by the user or not                   
                    if(olikeData && Object.keys(olikeData).length){
-                     aPosts[index]['likestatus'] = true;
+                    aPostAllData[0][index]['likestatus'] = true;
                    }else{
-                     aPosts[index]['likestatus'] = false;
+                    aPostAllData[0][index]['likestatus'] = false;
                    }                   
                 }));
             }       
@@ -87,7 +87,8 @@ export class PostsController {
                 statuscode: HttpStatus.OK,
                 message: 'posts retrieved successfully',
                 trendingposts: aTrendingPosts,
-                posts: aPosts
+                posts: aPostAllData[0],
+                totalcount: aPostAllData[1]
             }
         }else{
             throw new HttpException('Invalid User',HttpStatus.UNAUTHORIZED);

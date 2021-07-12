@@ -24,13 +24,14 @@ export class UserController {
     
     if(Array.isArray(userexistdata) && userexistdata.length){
       console.log("====already exist=======");
-      throw new HttpException('User already exist', HttpStatus.OK);
+      throw new HttpException('User already exist', HttpStatus.BAD_REQUEST);
     }else{
       let username = createUserDto.firstname+' '+createUserDto.lastname;
       createUserDto['created'] = new Date();
       let userDetails = await this.userService.create(createUserDto);
       console.log(userDetails);
-      await this.mailService.sendRegistrationEmail(createUserDto.email, username);//send the registration email to user
+      /* await this.mailService.sendRegistrationEmail(createUserDto.email, username); */
+      //send the registration email to user
 
       return {
           "status": true,
@@ -64,7 +65,7 @@ export class UserController {
               return {
                   "status": true,
                   "message": "logged in successfully",
-                  "statuscode": HttpStatus.OK,
+                  "statusCode": HttpStatus.OK,
                   "result": {
                     firstname: user[0].firstname,
                     lastname: user[0].lastname,

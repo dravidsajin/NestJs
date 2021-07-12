@@ -13,7 +13,7 @@ import { constants } from '../constants/constants';
     MailModule, 
     JwtModule.register({
       secret: constants.secret,
-      signOptions: { expiresIn: '300s' },
+      signOptions: { expiresIn: '1d' },
       })
     ],
   controllers: [UserController],
